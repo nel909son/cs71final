@@ -3,10 +3,16 @@ import time
 import tkinter as tk
 from tkinter import *
 import tkinter.ttk as ttk
+import tkinter.messagebox as mb
+from videoDb import Database
 
-path = "./"
-db = Database(path+"database.db")
+
+
+
 root = tk.Tk()
+path = "C:/Users/nelso/Desktop/python/71final/"
+
+db = Database(path+'Movie.db')
 
 root.title = ("Nels Retro VHS Store")
 
@@ -14,9 +20,9 @@ root.geometry("800x650")
 root['background']='#49A19A'
 labelTitle = Label(root, text = "Nels Retro VHS Store", font=("Helvetica",16))
 
-treev = ttk.Treeview(root,selectmode ='browse' )
+#treev = ttk.Treeview(root,selectmode ='browse' )
 
-treev.pack(side = 'bottom', fill='x')
+#treev.pack(side = 'bottom', fill='x')
 
 
 
@@ -41,11 +47,41 @@ entryMovieYear = Entry(root)
 #delete a movie from the database
 #should probably add a confirmation
 def deleteMovie():
-    return
+    if entryMovieID.get() =='':
+        mb.showinfo('Information', "select movie to delete")
+        return
+    msgBox = mb.askquestion('Delete Record', 'Are you sure!! what if you miss it when its gone!', icon='warning')
+    if msgBox == 'yes':
+        db.remove(entryMovieID.get())
+        clearField()
+        loadFilmData()
 
 #clear the fieldsss. they will come.
 def clearField():
-    return
+    entryMovieID.delete(0,END)
+    entryMovieName.delete(0,END)
+    entryMovieGenre.delete(0,END)
+    entryMovieYear.delete(0,END)
+
+def validate_entry():
+    if entryMovieName.get() == "":
+        mb.showinfo('Information', "Please enter movie name")
+        entryMovieName.focus_set()
+        return
+    if entryMovieID.get() == "":
+        mb.showinfo('Information', "Please enter movie ID")
+        entryMovieID.focus_set()
+        return
+    if entryMovieGenre.get() == "":
+        mb.showinfo('Information', "Please enter movie genre")
+        entryMovieGenre.focus_set()
+        return
+    if entryMovieYear.get() == "":
+        mb.showinfo('Information', "Please enter movie year")
+        entryMovieYear.focus_set()
+        return
+    else:
+        return
 
 #show all the movies in the database
 def showAll():
@@ -54,21 +90,55 @@ def showAll():
 #exit the simulation..err program
 
 def exit():
-    return
+    msgBox = mb.askquestion('Exiting...', 'ARE YOU SUUUURE!?', icon='warning')
+    if msgBox == 'yes':
+        root.destroy()
 
 #update a films info
 def updateMovie():
-    return
+    validate_entry()
 
-#loading film data
+    db.update(entryMovieID.get(),entryMovieName.get(),entryMovieGenre.get(),entryMovieYear.get())
+    clearField()
+    loadFilmData()
+    
+#kvs5N3rpHq3
+
+#loading film data on program open/update. REFRESSHHHHHing
 def loadFilmData():
-    return
+    for row in treeviewMovie.get_children():
+        treeviewMovie.delete(row)
+    for row in db.fetch():
+        movieID = row[1]
+        movieName = row[2]
+        movieGenre = row[3]
+        movieYear = row[4]
+        treeviewMovie.insert("",'end',text=movieID,values=(movieID,movieName,movieGenre,movieYear))
+
 
 
 #add a movie to the database
 def addMovie():
+    validate_entry()
+    db.insert(entryMovieID.get(),entryMovieName.get(),entryMovieGenre.get(),entryMovieYear.get())
+
+    clearField()
+    loadFilmData()
     return
 
+#for stuff to show in treeview
+def show_selected_movie(event):
+    clearField()
+    for clicked_on in treeviewMovie.selection():
+        item = treeviewMovie.item(clicked_on)
+        global movie_id
+        movie_id, movie_name,movie_genre,movie_year = item["values"][0:6]
+        entryMovieID.insert(0,movie_id)
+        entryMovieName.insert(0,movie_name)
+        entryMovieGenre.insert(0,movie_genre)
+        entryMovieYear.insert(0,movie_year)
+
+    return movie_id
 
 #the BUTTONS give em somethin to click
 buttonAdd = Button(root, text = "Add Movie", command = addMovie )
@@ -77,6 +147,28 @@ buttonDelete = Button(root, text = "Delete a Film", command = deleteMovie)
 buttonClear = Button(root, text = "Clear Fields", command = clearField)
 buttonShowAll = Button(root, text = "Show all Films", command = showAll)
 buttonExit = Button(root, text = "Exit", command = exit )
+
+#treeview widget
+
+columns = ("#1","#2","#3","#4")
+
+treeviewMovie = ttk.Treeview(root, show="headings", height ="5",column=columns)
+
+treeviewMovie.heading('#1', text='Moive ID', anchor='center')
+treeviewMovie.column('#1', width=60, anchor='center', stretch = False)
+
+treeviewMovie.heading('#2', text='Movie Name', anchor='center')
+treeviewMovie.column('#2', width=10, anchor='center',stretch = True)
+
+treeviewMovie.heading('#3', text='Moive Genre', anchor='center')
+treeviewMovie.column('#3', width=10, anchor='center',stretch = True)
+
+treeviewMovie.heading('#4', text='Release Year', anchor='center')
+treeviewMovie.column('#4', width=10, anchor='center',stretch = True)
+
+vertical_scroll_bar = ttk.Scrollbar(root, orient=VERTICAL, command= treeviewMovie.yview)
+
+horizontal_scroll_bar = ttk.Scrollbar(root, orient=HORIZONTAL, command= treeviewMovie.xview)
 
 #place the labels we made earlier
 labelTitle.place(x=280, y=5, height = 27, width=300)
@@ -99,10 +191,16 @@ buttonDelete.place(x = 50, y=350, height= 21, width = 187)
 buttonShowAll.place(x = 300, y = 350, height= 21, width = 187)
 buttonExit.place(x = 550, y = 350, height = 21, width = 187)
 
+#place scrollbars
+vertical_scroll_bar.place(x=40+640 +1 , y = 390, height=180 + 20)
+treeviewMovie.configure(yscroll=vertical_scroll_bar.set)
+horizontal_scroll_bar.place(x=40, y=390+200+1, width=620+20)
+treeviewMovie.configure(xscroll=horizontal_scroll_bar.set)
 
+treeviewMovie.bind("<<TreeviewSelect>>", show_selected_movie)
+treeviewMovie.place(x=40, y=390, height= 200, width= 640)
 #TODO!
 #treeviewDisplay.place()
 
 root.mainloop()
 
-#columns = ("1","2","3","4","5","6")
