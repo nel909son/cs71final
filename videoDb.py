@@ -12,7 +12,8 @@ class Database:
                                                                     movieID integer,
                                                                     movieName text,
                                                                     movieGenre text,
-                                                                    movieYear integer)''')
+                                                                    movieYear integer,
+                                                                    optionListVar text)''')
         self.conn.commit()
 
     def fetch(self):
@@ -20,16 +21,16 @@ class Database:
         rows = self.cur.fetchall()
         return rows
 
-    def insert(self, movieID,movieName,movieGenre,movieYear):
-        self.cur.execute("INSERT INTO Movie_Master VALUES (NULL,?,?,?,?)",(movieID, movieName,movieGenre,movieYear))
+    def insert(self, movieID,movieName,movieGenre,movieYear,optionListVar):
+        self.cur.execute("INSERT INTO Movie_Master VALUES (NULL,?,?,?,?,?)",(movieID, movieName,movieGenre,movieYear,optionListVar))
         self.conn.commit()
 
     def remove(self, movieID):
         self.cur.execute("DELETE FROM Movie_Master WHERE movieID=?",(movieID,))
         self.conn.commit()
 
-    def update(self, movieId, movieName, movieGenre, movieYear):
-        self.cur.execute("UPDATE Movie_Master SET movieName=?, movieGenre=?, movieYear=? WHERE movieID", (movieName,movieGenre,movieYear,movieID))
+    def update(self, movieID, movieName, movieGenre, movieYear,optionListVar):
+        self.cur.execute("UPDATE Movie_Master SET movieName=?, movieGenre=?, movieYear=?,optionListVar=? WHERE movieID=?", (movieName,movieGenre,movieYear, optionListVar,movieID))
         self.conn.commit()
 
     def __del__(self):

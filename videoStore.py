@@ -1,11 +1,12 @@
-import os
-import time
+# a basic idea for a video store database. i may use it for a personal 
+#database to remember all the movies i've seen! 
+
+
 import tkinter as tk
 from tkinter import *
 import tkinter.ttk as ttk
 import tkinter.messagebox as mb
 from videoDb import Database
-
 
 
 
@@ -18,11 +19,7 @@ root.title = ("Nels Retro VHS Store")
 
 root.geometry("800x650")
 root['background']='#49A19A'
-labelTitle = Label(root, text = "Nels Retro VHS Store", font=("Helvetica",16))
-
-#treev = ttk.Treeview(root,selectmode ='browse' )
-
-#treev.pack(side = 'bottom', fill='x')
+labelTitle = Label(root, text = "Nels Retro VHS Store", font=("Helvetica",19))
 
 
 
@@ -37,6 +34,7 @@ entryMovieID = Entry(root)
 entryMovieName = Entry(root)
 entryMovieGenre = Entry(root)
 entryMovieYear = Entry(root)
+
 
 
 
@@ -64,31 +62,36 @@ def clearField():
     entryMovieYear.delete(0,END)
 
 def validate_entry():
-    if entryMovieName.get() == "":
-        mb.showinfo('Information', "Please enter movie name")
-        entryMovieName.focus_set()
-        return
-    if entryMovieID.get() == "":
-        mb.showinfo('Information', "Please enter movie ID")
-        entryMovieID.focus_set()
-        return
-    if entryMovieGenre.get() == "":
-        mb.showinfo('Information', "Please enter movie genre")
-        entryMovieGenre.focus_set()
-        return
-    if entryMovieYear.get() == "":
-        mb.showinfo('Information', "Please enter movie year")
-        entryMovieYear.focus_set()
-        return
-    else:
-        return
+    global valid_entry
+    valid_entry = False
+    while valid_entry != True:
+        if entryMovieName.get() == "":
+            mb.showinfo('Information', "Please enter movie name")
+            entryMovieName.focus_set()
+            return
+        elif entryMovieID.get() == "":
+            mb.showinfo('Information', "Please enter movie ID")
+            entryMovieID.focus_set()
+            return
+        elif entryMovieGenre.get() == "":
+            mb.showinfo('Information', "Please enter movie genre")
+            entryMovieGenre.focus_set()
+            return
+        elif entryMovieYear.get() == "":
+            mb.showinfo('Information', "Please enter movie year")
+            entryMovieYear.focus_set()
+            return
+        else:
+            valid_entry= True
+            
+    
 
 #show all the movies in the database
 def showAll():
-    return
+    loadFilmData()
+    
 
 #exit the simulation..err program
-
 def exit():
     msgBox = mb.askquestion('Exiting...', 'ARE YOU SUUUURE!?', icon='warning')
     if msgBox == 'yes':
@@ -96,15 +99,17 @@ def exit():
 
 #update a films info
 def updateMovie():
+
     validate_entry()
+    if valid_entry:
 
-    db.update(entryMovieID.get(),entryMovieName.get(),entryMovieGenre.get(),entryMovieYear.get())
-    clearField()
-    loadFilmData()
-    
-#kvs5N3rpHq3
+        db.update(entryMovieID.get(),entryMovieName.get(),entryMovieGenre.get(),entryMovieYear.get(),optionListVar.get())
+        clearField()
+        loadFilmData()
+    else:
+        return
 
-#loading film data on program open/update. REFRESSHHHHHing
+#loading film data on program open/update.
 def loadFilmData():
     for row in treeviewMovie.get_children():
         treeviewMovie.delete(row)
@@ -113,18 +118,20 @@ def loadFilmData():
         movieName = row[2]
         movieGenre = row[3]
         movieYear = row[4]
-        treeviewMovie.insert("",'end',text=movieID,values=(movieID,movieName,movieGenre,movieYear))
+        movieReview = row[5]
+        treeviewMovie.insert("",'end',text=movieID,values=(movieID,movieName,movieGenre,movieYear,movieReview))
 
 
 
 #add a movie to the database
 def addMovie():
     validate_entry()
-    db.insert(entryMovieID.get(),entryMovieName.get(),entryMovieGenre.get(),entryMovieYear.get())
-
-    clearField()
-    loadFilmData()
-    return
+    if valid_entry:
+        db.insert(entryMovieID.get(),entryMovieName.get(),entryMovieGenre.get(),entryMovieYear.get(),optionListVar.get())
+        clearField()
+        loadFilmData()
+    else:
+        return
 
 #for stuff to show in treeview
 def show_selected_movie(event):
@@ -132,13 +139,23 @@ def show_selected_movie(event):
     for clicked_on in treeviewMovie.selection():
         item = treeviewMovie.item(clicked_on)
         global movie_id
-        movie_id, movie_name,movie_genre,movie_year = item["values"][0:6]
+        movie_id, movie_name,movie_genre,movie_year,movie_review = item["values"][0:6]
         entryMovieID.insert(0,movie_id)
         entryMovieName.insert(0,movie_name)
         entryMovieGenre.insert(0,movie_genre)
         entryMovieYear.insert(0,movie_year)
 
     return movie_id
+
+
+#options menu
+labelMovieLiked = Label(root, text = "Review")
+likedOptionList = ["Loved","Liked","Disliked"]
+optionListVar = tk.StringVar(root)
+optionListVar.set(likedOptionList[1])
+likeOpt = tk.OptionMenu(root, optionListVar, *likedOptionList)
+likeOpt.config(width=90)
+
 
 #the BUTTONS give em somethin to click
 buttonAdd = Button(root, text = "Add Movie", command = addMovie )
@@ -150,7 +167,7 @@ buttonExit = Button(root, text = "Exit", command = exit )
 
 #treeview widget
 
-columns = ("#1","#2","#3","#4")
+columns = ("#1","#2","#3","#4","#5")
 
 treeviewMovie = ttk.Treeview(root, show="headings", height ="5",column=columns)
 
@@ -166,6 +183,10 @@ treeviewMovie.column('#3', width=10, anchor='center',stretch = True)
 treeviewMovie.heading('#4', text='Release Year', anchor='center')
 treeviewMovie.column('#4', width=10, anchor='center',stretch = True)
 
+treeviewMovie.heading('#5', text='Review', anchor='center')
+treeviewMovie.column('#5', width=10, anchor='center',stretch = True)
+
+
 vertical_scroll_bar = ttk.Scrollbar(root, orient=VERTICAL, command= treeviewMovie.yview)
 
 horizontal_scroll_bar = ttk.Scrollbar(root, orient=HORIZONTAL, command= treeviewMovie.xview)
@@ -176,12 +197,13 @@ labelMovieID.place(x=175, y = 40, height=23, width=100)
 labelMovieName.place(x=175, y = 70, height=23,width=100)
 labelMovieGenre.place(x=175, y=100, height=23, width = 100)
 labelMovieYear.place(x=175, y =130, height=23, width= 100)
-
+labelMovieLiked.place(x=175, y = 160, height=23, width= 100)
 #place entry boxes
-entryMovieID.place(x=400, y = 40, height = 23, width=100)
-entryMovieName.place(x=400, y = 70, height = 23, width=100)
-entryMovieGenre.place(x=400, y = 100, height = 23, width=100)
-entryMovieYear.place(x=400, y = 130, height = 23, width=100)
+entryMovieID.place(x=400, y = 40, height = 23, width=150)
+entryMovieName.place(x=400, y = 70, height = 23, width=150)
+entryMovieGenre.place(x=400, y = 100, height = 23, width=150)
+entryMovieYear.place(x=400, y = 130, height = 23, width=150)
+likeOpt.place(x = 400, y = 160, height = 23, width=150)
 
 #place BUTTONS
 buttonAdd.place(x=300, y = 250, height = 21, width = 187)
@@ -192,15 +214,13 @@ buttonShowAll.place(x = 300, y = 350, height= 21, width = 187)
 buttonExit.place(x = 550, y = 350, height = 21, width = 187)
 
 #place scrollbars
-vertical_scroll_bar.place(x=40+640 +1 , y = 390, height=180 + 20)
+vertical_scroll_bar.place(x=70+640 +1 , y = 390, height=180 + 20)
 treeviewMovie.configure(yscroll=vertical_scroll_bar.set)
-horizontal_scroll_bar.place(x=40, y=390+200+1, width=620+20)
+horizontal_scroll_bar.place(x=70, y=390+200+1, width=620+20)
 treeviewMovie.configure(xscroll=horizontal_scroll_bar.set)
 
 treeviewMovie.bind("<<TreeviewSelect>>", show_selected_movie)
-treeviewMovie.place(x=40, y=390, height= 200, width= 640)
-#TODO!
-#treeviewDisplay.place()
+treeviewMovie.place(x=70, y=390, height= 200, width= 640)
 
 root.mainloop()
 
